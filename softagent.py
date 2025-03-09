@@ -29,6 +29,7 @@ def load_company_info(data_folder):
             with open(filepath, 'r', encoding='utf-8') as file:
                 md_content = file.read()
                 company_info += markdown.markdown(md_content)
+    print(company_info)
     return company_info
 
 
@@ -37,13 +38,16 @@ def prewarm(proc: JobProcess):
 
 
 async def entrypoint(ctx: JobContext):
-    data_folder = "data"
+    data_folder = "data/company"
+    agent_folder = "data/softskill"
     company_info = load_company_info(data_folder)
-    
+    agent_info = load_company_info(agent_folder)
     initial_ctx = llm.ChatContext().append(
         role="system",
         text=(
-            "You are an AI interviewer conducting a soft skills interview. Ask one question at a time, keep it professional and conversational. Ensure responses are realistic, brief, and to the point, like a real candidate would answer in an actual interview. Dont speak too long responses please"
+            "Start a soft skills Interview with the candidate."
+            f"Personality Training: {agent_info}"
+            "Once you have questioned the user over the key aspects required by the company, generate a short summary about the user's fit, and give a score out of 100"
             f"Company background: {company_info}"
         ),
     )
@@ -68,7 +72,6 @@ async def entrypoint(ctx: JobContext):
         log_queue.put_nowait(f"[{datetime.now()}] AGENT:\n{msg.content}\n\n")
     agent.start(ctx.room, participant)
 
-    # The agent should be polite and greet the user when it joins :)
     await agent.say("Hey, I will be taking your Soft Skills Interview today", allow_interruptions=False)
 
 

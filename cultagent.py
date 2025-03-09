@@ -1,5 +1,7 @@
 import logging
 import os
+from datetime import datetime
+from multiprocessing import Queue  
 import markdown
 
 from dotenv import load_dotenv
@@ -17,7 +19,7 @@ from livekit.plugins import silero, openai, elevenlabs
 
 load_dotenv(dotenv_path=".env.local")
 logger = logging.getLogger("voice-agent")
-
+log_queue = Queue()
 
 def load_company_info(data_folder):
     company_info = ""
@@ -27,6 +29,7 @@ def load_company_info(data_folder):
             with open(filepath, 'r', encoding='utf-8') as file:
                 md_content = file.read()
                 company_info += markdown.markdown(md_content)
+    print(company_info)
     return company_info
 
 
@@ -35,13 +38,16 @@ def prewarm(proc: JobProcess):
 
 
 async def entrypoint(ctx: JobContext):
-    data_folder = "data"
+    data_folder = "data/company"
+    agent_folder = "data/culture"
     company_info = load_company_info(data_folder)
-    
+    agent_info = load_company_info(agent_folder)
     initial_ctx = llm.ChatContext().append(
         role="system",
         text=(
-            "You are an AI interviewer conducting a culture fit interview. Ask one question at a time, keep it professional and conversational. Ensure responses are realistic, brief, and to the point, like a real candidate would answer in an actual interview. "
+            "Start a culture fit Interview with the candidate."
+            f"Culture Fit Training: {agent_info}"
+            "Once you have questioned the user over the key aspects required by the company, generate a short summary about the user's fit, and give a score out of 100"
             f"Company background: {company_info}"
         ),
     )
@@ -61,9 +67,11 @@ async def entrypoint(ctx: JobContext):
         chat_ctx=initial_ctx,
     )
 
+    @agent.on("agent_speech_committed")
+    def on_agent_speech_committed(msg: llm.ChatMessage):
+        log_queue.put_nowait(f"[{datetime.now()}] AGENT:\n{msg.content}\n\n")
     agent.start(ctx.room, participant)
 
-    # The agent should be polite and greet the user when it joins :)
     await agent.say("Hey, I will be taking your Culture Fit Interview today", allow_interruptions=False)
 
 
