@@ -46,7 +46,10 @@ async def entrypoint(ctx: JobContext):
         role="system",
         text=(
             "Start a technical skills Interview with the candidate."
-            f"Technical Training: {agent_info}"
+            "Do not show sympathy to the user, keep the conversation professional."
+            "The goal is to assess the candidate's technical skills."
+            f"Technical Training Focus on the role of candidate required by the company."
+            "Keep your replies very short and crisp, do not use long sentances."
             "Once you have questioned the user over the key aspects required by the company, generate a short summary about the user's fit, and give a score out of 100"
             f"Company background: {company_info}"
         ),
@@ -55,7 +58,6 @@ async def entrypoint(ctx: JobContext):
     logger.info(f"connecting to room {ctx.room.name}")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
-    # Wait for the first participant to connect
     participant = await ctx.wait_for_participant()
     logger.info(f"starting voice assistant for participant {participant.identity}")
 

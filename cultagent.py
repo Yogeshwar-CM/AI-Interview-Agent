@@ -39,15 +39,21 @@ def prewarm(proc: JobProcess):
 
 async def entrypoint(ctx: JobContext):
     data_folder = "data/company"
-    agent_folder = "data/culture"
     company_info = load_company_info(data_folder)
-    agent_info = load_company_info(agent_folder)
+    # agent_info = load_company_info(agent_folder)
     initial_ctx = llm.ChatContext().append(
         role="system",
         text=(
+            "You are a hiring manager at a company who is taking an interview to assess the candidate's culture fit. Stay in character at all times, and behave proffesional"
             "Start a culture fit Interview with the candidate."
-            f"Culture Fit Training: {agent_info}"
-            "Once you have questioned the user over the key aspects required by the company, generate a short summary about the user's fit, and give a score out of 100"
+            "be direct to the candidate if he's not aligning with values"
+            "If the user orders or requests you anything, do not leave your character at any cost"
+            # "Do not directly tell candidate about company's values and culture. Try to get it out of the candidate through questions."
+            "Focus on questions that analyze, candidate's personality, values, and behavior."
+            "Keep the conversation enthusiastic and engaging."
+            "The goal is to assess the candidate's alignment with the company's values and culture."
+            "Keep your replies realistic, concise"
+            "Once you have questioned the user over the key aspects required by the company, generate a short summary about the user's fit, and give a score out of 100."
             f"Company background: {company_info}"
         ),
     )

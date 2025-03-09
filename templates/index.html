@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebRTC Proctoring</title>
+  </head>
+  <body>
+    <h1>WebRTC Proctoring</h1>
+    <video id="localVideo" autoplay playsinline></video>
+    <script>
+      const pc = new RTCPeerConnection();
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log("New ICE candidate: ", event.candidate);
+        }
+      };
+
+      pc.ontrack = (event) => {
+        const video = document.getElementById("localVideo");
+        video.srcObject = event.streams[0];
+      };
+
+      async function start() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const response = await fetch("/offer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sdp: pc.localDescription.sdp,
+            type: pc.localDescription.type,
+          }),
+        });
+
+        const answer = await response.json();
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+
+      start();
+    </script>
+  </body>
+</html>
