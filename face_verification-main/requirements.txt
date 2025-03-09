@@ -1,0 +1,7 @@
+numpy==1.26.0
+streamlit==1.43.1
+opencv-python-headless==4.11.0.86
+tensorflow==2.18.0
+tf-keras
+deepface==0.0.93
+streamlit-webrtc
